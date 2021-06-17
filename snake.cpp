@@ -31,13 +31,17 @@ int main(){
 }
 
 void runGame(){
-	WINDOW * win = newwin(1,50,0,0);
+	WINDOW * win = newwin(2,50,0,0);
 	int d, move, speed_val=1, score = 0;
 	char str[3], speed[3];
-	waddstr(win, "Dimension: ");
+	
+	waddstr(win, "WELCOME TO SHITTY SNAKE!\n");
+	waddstr(win, "Choose the dimension of the board: ");
 	wgetstr(win, str);
 	d = std::atoi(str);
-	waddstr(win, "Speed (integer, 1=fastest, 2=slower, etc.): ");
+	wclear(win);
+	wrefresh(win);
+	waddstr(win, "Choose the speed (1=fastest, 2=slower, etc.): ");
 	wgetstr(win, speed);
 	speed_val = std::atoi(speed);
 	wclear(win);
