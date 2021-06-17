@@ -81,8 +81,9 @@ void runGame(){
 		}
 		usleep(set_speed_input(speed_val));
 	}
-
+	
 	nodelay(win, false); //wait input
+	usleep(base_speed);
 	printBoard(win,board,food,snake,score);
 	waddstr(win, "You lost!");
 	wrefresh(win);
