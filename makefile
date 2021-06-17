@@ -1,4 +1,4 @@
-SOURCES=$(shell find . -name "snake_ncurses.cpp")
+SOURCES=$(shell find . -name "snake.cpp")
 OBJECTS=$(SOURCES:%.cpp=%.o)
 TARGET=snake
 LOADLIBES=-lncurses
