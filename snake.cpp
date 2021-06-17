@@ -11,7 +11,7 @@ using std::cout; using std::cin; using std::endl;
 const int base_speed = 50000;
 int x0_val, y0_val;
 
-void printBoard(WINDOW*, const Board&, const Food&, const Snake&, int);	
+void printBoard(WINDOW*, const Board&, const Food&, const Snake&, int, bool);	
 bool checkLose(const Board&, const Snake&);
 short convertMove(WINDOW*);
 static void fine(int, int);
@@ -59,19 +59,20 @@ void runGame(){
 	w_width = 2*board_d; //twice because i print ". " as a board cell	
 	win = newwin(w_height,w_width,(y0_val-w_height)/2,(x0_val-w_width)/2);
 	keypad(win, TRUE);  /* abilita la mappatura della tastiera */ 
+
 	Board board(board_d);
 	Food food(std::rand()%board_d,std::rand()%board_d);
 	Snake snake(board_d/2, board_d/2);
 	
 	//first print	
-	printBoard(win,board,food,snake,score);
+	printBoard(win,board,food,snake,score, gameState);
 	wrefresh(win);
 	snake.move(convertMove(win));
 	nodelay(win, true);//don't wait for input after this
 
 	while(gameState){
 		snake.move(convertMove(win));
-		printBoard(win, board, food, snake, score);
+		printBoard(win, board, food, snake, score, gameState);
 		wrefresh(win);
 		gameState = !checkLose(board,snake);
 		if(food.getX() == snake.getX()[0] && food.getY() == snake.getY()[0]){
@@ -84,7 +85,7 @@ void runGame(){
 	
 	nodelay(win, false); //wait input
 	usleep(base_speed);
-	printBoard(win,board,food,snake,score);
+	printBoard(win,board,food,snake,score, gameState);
 	waddstr(win, "You lost!");
 	wrefresh(win);
 	wgetch(win);
@@ -95,28 +96,36 @@ int set_speed_input(int speed_val){
 	return (speed_val==KEY_ENTER?base_speed:speed_val*base_speed);
 }
 
-void printBoard(WINDOW * win, const Board & board, const Food & food, const Snake & snake, int score){
+void printBoard(WINDOW* win, const Board& board, const Food& food, const Snake& snake, int score, bool print_head){
+	int wx=0, wy=0;
 	wmove(win,0,0);
 	waddstr(win, "Score: ");
 	waddstr(win, std::to_string(score).c_str());
 	waddstr(win, " (controls: WASD/Arrow keys, exit:CTRL+Z/C)");
 	waddch(win, '\n');
+
 	for(short h=0;h<board.getDim();h++){
 		for(short w=0;w<board.getDim();w++){
 			waddch(win, board.getS());
+			waddch(win, ' ');
 		}
 	}
+	getyx(win, wy, wx);
 	
 	//print food	
-	wmove(win, food.getY(), food.getX());
+	wmove(win, food.getY(), 2*food.getX());
 	waddch(win, food.getS());
 
-	wmove(win, snake.getY()[0], snake.getX()[0]);
-	waddch(win, snake.getS(0));
+	//print snake
+	if(print_head){
+		wmove(win, snake.getY()[0], 2*snake.getX()[0]);
+		waddch(win, snake.getS(0));
+	}
 	for(int i=1;i<snake.len();i++){
-		wmove(win, snake.getY()[i], snake.getX()[i]);
+		wmove(win, snake.getY()[i], 2*snake.getX()[i]);
 		waddch(win, snake.getS(1));
 	}
+	wmove(win, wy, wx);
 }
 
 bool checkLose(const Board& board, const Snake& snake){
