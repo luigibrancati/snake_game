@@ -11,8 +11,6 @@ using std::cout; using std::cin; using std::endl;
 const int base_speed = 50000;
 int x0_val, y0_val;
 
-
-
 void printBoard(WINDOW*, const Board&, const Food&, const Snake&, int);	
 bool checkLose(const Board&, const Snake&);
 short convertMove(WINDOW*);
@@ -47,6 +45,7 @@ void runGame(){
 	waddstr(win, "Choose the dimension of the board: ");
 	wgetstr(win, str);
 	board_d = std::atoi(str);
+	board_d = (board_d<15? 15:board_d);
 	wclear(win);
 	wrefresh(win);
 
@@ -59,6 +58,7 @@ void runGame(){
 	w_height = board_d+3; //3 rows more to print Score and loosing message
 	w_width = 2*board_d; //twice because i print ". " as a board cell	
 	win = newwin(w_height,w_width,(y0_val-w_height)/2,(x0_val-w_width)/2);
+	keypad(win, TRUE);  /* abilita la mappatura della tastiera */ 
 	Board board(board_d);
 	Food food(std::rand()%board_d,std::rand()%board_d);
 	Snake snake(board_d/2, board_d/2);
@@ -98,7 +98,7 @@ void printBoard(WINDOW * win, const Board & board, const Food & food, const Snak
 	wmove(win,0,0);
 	waddstr(win, "Score: ");
 	waddstr(win, std::to_string(score).c_str());
-	waddstr(win, " (w=UP,a=LEFT,s=DOWN,d=RIGHT)");
+	waddstr(win, " (controls: WASD/Arrow keys, exit:CTRL+Z/C)");
 	waddch(win, '\n');
 	for(short h=0;h<board.getDim();h++){
 		for(short w=0;w<board.getDim();w++){
