@@ -10,53 +10,24 @@ using std::cout; using std::cin; using std::endl;
 
 const int base_speed = 50000;
 
-void printBoard(WINDOW * win, const Board & board, const Food & food, const Snake & snake, int score){
-	wmove(win,0,0);
-	waddstr(win, "Score: ");
-	waddstr(win, std::to_string(score).c_str());
-	waddstr(win, " (w=UP,a=LEFT,s=DOWN,d=RIGHT)");
-	waddch(win, '\n');
-	for(short h=0;h<board.getDim();h++){
-		for(short w=0;w<board.getDim();w++){
-			if(snake.on(w,h)){
-				waddch(win,snake.getS(w,h));
-			}
-			else if(w==food.getX() && h==food.getY()){
-				waddch(win, food.getS());
-			}
-			else{
-				waddch(win, board.getS());
-			}	
-			waddch(win,' ');
-		}
-	}
-}
+void printBoard(WINDOW*, const Board&, const Food&, const Snake&, int);	
+bool checkLose(const Board&, const Snake&);
+short convertMove(WINDOW*);
+static void fine(int, int);
+void runGame();
 
-bool checkLose(Board& board, Snake& snake){
-	bool lost_board = (snake.getX()[0] < 0 || snake.getY()[0] < 0 || //
-			snake.getX()[0] == board.getDim() || snake.getY()[0] == board.getDim());
+int main(){
+	std::srand(std::time(NULL));
 	
-	bool lost_snake = false;
-	for(int i=1;i<snake.len();i++){
-		if(snake.getX()[0]==snake.getX()[i] && snake.getY()[0]==snake.getY()[i]){
-			lost_snake = true;
-		}
-	}
-	return lost_board || lost_snake;
-}
-
-short convertMove(WINDOW * win){
-	int m = wgetch(win);
-	if(m==((int)'w')) return 0;
-	else if(m==((int)'a')) return 1;
-	else if(m==((int)'s')) return 2;
-	else if(m==((int)'d')) return 3;
-	return -1;
-}
-
-static void fine(int sig, int score){
-	endwin();
-	cout<<"You lost! Final score: "<<score<<endl;
+	// ncurses configuration
+	(void) initscr();      /* inizializza la libreria curses */ 
+	keypad(stdscr, TRUE);  /* abilita la mappatura della tastiera */ 
+	(void) nonl();         /* non convertire NL->CR/NL in output */ 
+	(void) cbreak();       /* prende i caratteri in input uno alla volta, senza attendere il \n */ 
+	(void) noecho();       /* nessuna echo dell'input */ 	
+	
+	runGame();
+	return 0;
 }
 
 void runGame(){
@@ -83,17 +54,15 @@ void runGame(){
 	snake.move(convertMove(win));
 	nodelay(win, true);
 
-	for(;;){
+	while(gameState){
 		snake.move(convertMove(win));
 		printBoard(win, board, food, snake, score);
 		wrefresh(win);
-		if(checkLose(board,snake)) break;
-		else {
-			if(food.getX() == snake.getX()[0] && food.getY() == snake.getY()[0]){
-				snake.eat();
-				food.replace(std::rand()%(d-2)+1,std::rand()%(d-2)+1);
-				score++;
-			}
+		gameState = !checkLose(board,snake);
+		if(food.getX() == snake.getX()[0] && food.getY() == snake.getY()[0]){
+			snake.eat();
+			food.replace(std::rand()%(d-2)+1,std::rand()%(d-2)+1);
+			score++;
 		}
 		usleep(speed_val*base_speed);
 	}
@@ -106,16 +75,51 @@ void runGame(){
 	fine(0, score);
 }
 
-int main(){
-	std::srand(std::time(NULL));
+void printBoard(WINDOW * win, const Board & board, const Food & food, const Snake & snake, int score){
+	wmove(win,0,0);
+	waddstr(win, "Score: ");
+	waddstr(win, std::to_string(score).c_str());
+	waddstr(win, " (w=UP,a=LEFT,s=DOWN,d=RIGHT)");
+	waddch(win, '\n');
+	for(short h=0;h<board.getDim();h++){
+		for(short w=0;w<board.getDim();w++){
+			if(snake.on(w,h)){
+				waddch(win,snake.getS(w,h));
+			}
+			else if(w==food.getX() && h==food.getY()){
+				waddch(win, food.getS());
+			}
+			else{
+				waddch(win, board.getS());
+			}	
+			waddch(win,' ');
+		}
+	}
+}
+
+bool checkLose(const Board& board, const Snake& snake){
+	bool lost_board = (snake.getX()[0] < 0 || snake.getY()[0] < 0 || //
+			snake.getX()[0] == board.getDim() || snake.getY()[0] == board.getDim());
 	
-	// ncurses configuration
-	(void) initscr();      /* inizializza la libreria curses */ 
-	keypad(stdscr, TRUE);  /* abilita la mappatura della tastiera */ 
-	(void) nonl();         /* non convertire NL->CR/NL in output */ 
-	(void) cbreak();       /* prende i caratteri in input uno alla volta, senza attendere il \n */ 
-	(void) noecho();       /* nessuna echo dell'input */ 	
-	
-	runGame();
-	return 0;
+	bool lost_snake = false;
+	for(int i=1;i<snake.len();i++){
+		if(snake.getX()[0]==snake.getX()[i] && snake.getY()[0]==snake.getY()[i]){
+			lost_snake = true;
+		}
+	}
+	return lost_board || lost_snake;
+}
+
+short convertMove(WINDOW * win){
+	int m = wgetch(win);
+	if(m==((int)'w')) return 0;
+	else if(m==((int)'a')) return 1;
+	else if(m==((int)'s')) return 2;
+	else if(m==((int)'d')) return 3;
+	return -1;
+}
+
+static void fine(int sig, int score){
+	endwin();
+	cout<<"You lost! Final score: "<<score<<endl;
 }

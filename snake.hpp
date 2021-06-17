@@ -44,7 +44,7 @@ class Snake {
 		y({y,y}),
 		curr_dir(LEFT)
 	{
-		symbols[0]='v';
+		symbols[0]='>';
 		symbols[1]='O';
 	}
 
