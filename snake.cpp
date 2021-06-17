@@ -55,8 +55,8 @@ void runGame(){
 	wclear(win);
 	wrefresh(win);
 
-	w_height = board_d+3; //3 rows more to print Score and loosing message
-	w_width = 2*board_d; //twice because i print ". " as a board cell	
+	w_height = board_d+3; //3 rows more to print Score and losing message
+	w_width = 2*board_d; //twice because I print ". " as a board cell	
 	win = newwin(w_height,w_width,(y0_val-w_height)/2,(x0_val-w_width)/2);
 	keypad(win, TRUE);  /* abilita la mappatura della tastiera */ 
 
@@ -65,17 +65,17 @@ void runGame(){
 	Snake snake(board_d/2, board_d/2);
 	
 	//first print	
-	printBoard(win,board,food,snake,score, gameState);
+	printBoard(win,board,food,snake,score,gameState);
 	wrefresh(win);
 	snake.move(convertMove(win));
 	nodelay(win, true);//don't wait for input after this
 
 	while(gameState){
 		snake.move(convertMove(win));
+		gameState = !checkLose(board,snake);
 		printBoard(win, board, food, snake, score, gameState);
 		wrefresh(win);
-		gameState = !checkLose(board,snake);
-		if(food.getX() == snake.getX()[0] && food.getY() == snake.getY()[0]){
+		if(gameState && food.getX() == snake.getX()[0] && food.getY() == snake.getY()[0]){
 			snake.eat();
 			food.replace(std::rand()%board_d,std::rand()%board_d);
 			score++;
