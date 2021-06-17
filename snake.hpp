@@ -50,6 +50,7 @@ class Snake {
 
 	std::vector<short> getX() const {return this->x;}
 	std::vector<short> getY() const {return this->y;}
+	char getS(short s) const {return this->symbols[s];}
 	char getS(short w, short h) const {
 		if(w==this->x[0] && h==this->y[0]) return this->symbols[0];
 		else return this->symbols[1];

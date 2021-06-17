@@ -103,17 +103,19 @@ void printBoard(WINDOW * win, const Board & board, const Food & food, const Snak
 	waddch(win, '\n');
 	for(short h=0;h<board.getDim();h++){
 		for(short w=0;w<board.getDim();w++){
-			if(snake.on(w,h)){
-				waddch(win,snake.getS(w,h));
-			}
-			else if(w==food.getX() && h==food.getY()){
-				waddch(win, food.getS());
-			}
-			else{
-				waddch(win, board.getS());
-			}	
-			waddch(win,' ');
+			waddch(win, board.getS());
 		}
+	}
+	
+	//print food	
+	wmove(win, food.getY(), food.getX());
+	waddch(win, food.getS());
+
+	wmove(win, snake.getY()[0], snake.getX()[0]);
+	waddch(win, snake.getS(0));
+	for(int i=1;i<snake.len();i++){
+		wmove(win, snake.getY()[i], snake.getX()[i]);
+		waddch(win, snake.getS(1));
 	}
 }
 
