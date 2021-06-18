@@ -17,6 +17,7 @@ short convertMove(WINDOW*);
 static void fine(int, int);
 void runGame();
 int set_speed_input(int);
+char ** makeState(const Board&, const Snake&, const Food&, bool);
 
 int main(){
 	std::srand(std::time(NULL));
@@ -26,11 +27,12 @@ int main(){
 	keypad(stdscr, TRUE);  /* abilita la mappatura della tastiera */ 
 	(void) nonl();         /* non convertire NL->CR/NL in output */ 
 	(void) cbreak();       /* prende i caratteri in input uno alla volta, senza attendere il \n */ 
-	(void) noecho();       /* nessuna echo dell'input */ 	
 	
-
+	
+	//take the maximum size of main window, used later in runGame
 	getmaxyx(stdscr, y0_val,x0_val);
 	cout<<y0_val<<x0_val<<endl;
+	//run game
 	runGame();
 	return 0;
 }
@@ -65,6 +67,7 @@ void runGame(){
 	Snake snake(board_d/2, board_d/2);
 	
 	//first print	
+	(void) noecho();       /* nessuna echo dell'input */ 	
 	printBoard(win,board,food,snake,score,gameState);
 	wrefresh(win);
 	snake.move(convertMove(win));
@@ -104,28 +107,36 @@ void printBoard(WINDOW* win, const Board& board, const Food& food, const Snake& 
 	waddstr(win, " (controls: WASD/Arrow keys, exit:CTRL+Z/C)");
 	waddch(win, '\n');
 
+	char ** state = makeState(board,snake,food, print_head);
 	for(short h=0;h<board.getDim();h++){
 		for(short w=0;w<board.getDim();w++){
-			waddch(win, board.getS());
+			waddch(win, state[h][w]);
 			waddch(win, ' ');
 		}
 	}
-	getyx(win, wy, wx);
-	
-	//print food	
-	wmove(win, food.getY(), 2*food.getX());
-	waddch(win, food.getS());
+}
 
-	//print snake
+//optimization: build a board which is a matrix of chars
+char ** makeState(const Board& board, const Snake& snake, const Food& food, bool print_head){
+	int d = board.getDim();
+	char ** s = new char*[d];
+	for(int i=0;i<d;i++) s[i] = new char[d];
+
+	for(int i=0;i<d;i++){
+		for(int j=0;j<d;j++){
+			s[i][j] = board.getS();
+		}
+	}
+	
 	if(print_head){
-		wmove(win, snake.getY()[0], 2*snake.getX()[0]);
-		waddch(win, snake.getS(0));
+		s[food.getY()][food.getX()] = food.getS();
+		s[snake.getY()[0]][snake.getX()[0]] = snake.getS(0);
 	}
 	for(int i=1;i<snake.len();i++){
-		wmove(win, snake.getY()[i], 2*snake.getX()[i]);
-		waddch(win, snake.getS(1));
+		s[snake.getY()[i]][snake.getX()[i]] = snake.getS(1);
 	}
-	wmove(win, wy, wx);
+
+	return s;
 }
 
 bool checkLose(const Board& board, const Snake& snake){
