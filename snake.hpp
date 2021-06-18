@@ -6,17 +6,6 @@
 #include <algorithm>
 #include "food.hpp"
 
-std::vector<int> better_find(std::vector<short> pos, short val){
-	std::vector<int> found;
-	std::vector<short>::iterator iter = pos.begin();
-	while((iter=std::find(iter, pos.end(), val))!=pos.end()){
-		int p = iter-pos.begin(); 
-		found.push_back(p);
-		iter++;
-	}
-	return found;
-}
-
 short abs(short a){
 	return (a>0? a:-a);
 }

@@ -3,21 +3,15 @@
 #include <cstdlib>
 #include <ncurses.h>
 #include <unistd.h>
-#include "board.hpp"
-#include "food.hpp"
-#include "snake.hpp"
+#include "game.hpp"
 using std::cout; using std::cin; using std::endl;
 
 const int base_speed = 50000;
 int x0_val, y0_val;
 
-void printBoard(WINDOW*, const Board&, const Food&, const Snake&, int, bool);	
-bool checkLose(const Board&, const Snake&);
-short convertMove(WINDOW*);
 static void fine(int, int);
 void runGame();
 int set_speed_input(int);
-char ** makeState(const Board&, const Snake&, const Food&, bool);
 
 int main(){
 	std::srand(std::time(NULL));
@@ -62,33 +56,25 @@ void runGame(){
 	win = newwin(w_height,w_width,(y0_val-w_height)/2,(x0_val-w_width)/2);
 	keypad(win, TRUE);  /* abilita la mappatura della tastiera */ 
 
-	Board board(board_d);
-	Food food(std::rand()%board_d,std::rand()%board_d);
-	Snake snake(board_d/2, board_d/2);
+	SnakeGame game(board_d);
 	
 	//first print	
 	(void) noecho();       /* nessuna echo dell'input */ 	
-	printBoard(win,board,food,snake,score,gameState);
+	game.printBoard(win);
 	wrefresh(win);
-	snake.move(convertMove(win));
+	game.move(win);
 	nodelay(win, true);//don't wait for input after this
 
-	while(gameState){
-		snake.move(convertMove(win));
-		gameState = !checkLose(board,snake);
-		printBoard(win, board, food, snake, score, gameState);
+	while(game.getRun()){
+		game.move(win);
+		game.printBoard(win);
 		wrefresh(win);
-		if(gameState && food.getX() == snake.getX()[0] && food.getY() == snake.getY()[0]){
-			snake.eat();
-			food.replace(std::rand()%board_d,std::rand()%board_d);
-			score++;
-		}
 		usleep(set_speed_input(speed_val));
 	}
 	
 	nodelay(win, false); //wait input
 	usleep(base_speed);
-	printBoard(win,board,food,snake,score, gameState);
+	game.printBoard(win);
 	waddstr(win, "You lost!");
 	wrefresh(win);
 	wgetch(win);
@@ -97,68 +83,6 @@ void runGame(){
 
 int set_speed_input(int speed_val){
 	return (speed_val==KEY_ENTER?base_speed:speed_val*base_speed);
-}
-
-void printBoard(WINDOW* win, const Board& board, const Food& food, const Snake& snake, int score, bool print_head){
-	int wx=0, wy=0;
-	wmove(win,0,0);
-	waddstr(win, "Score: ");
-	waddstr(win, std::to_string(score).c_str());
-	waddstr(win, " (controls: WASD/Arrow keys, exit:CTRL+Z/C)");
-	waddch(win, '\n');
-
-	char ** state = makeState(board,snake,food, print_head);
-	for(short h=0;h<board.getDim();h++){
-		for(short w=0;w<board.getDim();w++){
-			waddch(win, state[h][w]);
-			waddch(win, ' ');
-		}
-	}
-}
-
-//optimization: build a board which is a matrix of chars
-char ** makeState(const Board& board, const Snake& snake, const Food& food, bool print_head){
-	int d = board.getDim();
-	char ** s = new char*[d];
-	for(int i=0;i<d;i++) s[i] = new char[d];
-
-	for(int i=0;i<d;i++){
-		for(int j=0;j<d;j++){
-			s[i][j] = board.getS();
-		}
-	}
-	
-	if(print_head){
-		s[food.getY()][food.getX()] = food.getS();
-		s[snake.getY()[0]][snake.getX()[0]] = snake.getS(0);
-	}
-	for(int i=1;i<snake.len();i++){
-		s[snake.getY()[i]][snake.getX()[i]] = snake.getS(1);
-	}
-
-	return s;
-}
-
-bool checkLose(const Board& board, const Snake& snake){
-	bool lost_board = (snake.getX()[0] < 0 || snake.getY()[0] < 0 || //
-			snake.getX()[0] == board.getDim() || snake.getY()[0] == board.getDim());
-	
-	bool lost_snake = false;
-	for(int i=1;i<snake.len();i++){
-		if(snake.getX()[0]==snake.getX()[i] && snake.getY()[0]==snake.getY()[i]){
-			lost_snake = true;
-		}
-	}
-	return lost_board || lost_snake;
-}
-
-short convertMove(WINDOW * win){
-	int m = wgetch(win);
-	if(m==((int)'w') || m==KEY_UP) return 0;
-	else if(m==((int)'a') || m==KEY_LEFT) return 1;
-	else if(m==((int)'s') || m==KEY_DOWN) return 2;
-	else if(m==((int)'d') || m==KEY_RIGHT) return 3;
-	return -1;
 }
 
 static void fine(int sig, int score){
