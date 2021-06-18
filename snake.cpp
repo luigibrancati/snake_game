@@ -7,7 +7,7 @@
 using std::cout; using std::cin; using std::endl;
 
 const int base_speed = 50000;
-int x0_val, y0_val;
+int x0_val = 0, y0_val = 0;
 
 static void fine(int, int);
 void runGame();
@@ -33,9 +33,8 @@ int main(){
 
 void runGame(){
 	WINDOW * win = newwin(2,50,0,0);
-	int board_d, w_height, w_width, move, speed_val=1, score = 0;
+	int board_d, w_height, w_width, speed_val=1;
 	char str[5], speed[5];
-	bool gameState = true;
 	
 	waddstr(win, "WELCOME TO SHITTY SNAKE!\n");
 	waddstr(win, "Choose the dimension of the board: ");
@@ -78,7 +77,7 @@ void runGame(){
 	waddstr(win, "You lost!");
 	wrefresh(win);
 	wgetch(win);
-	fine(0, score);
+	fine(0, game.getScore());
 }
 
 int set_speed_input(int speed_val){

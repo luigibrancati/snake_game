@@ -30,6 +30,7 @@ class SnakeGame {
 		}
 
 		bool getRun() const {return this->gameRun;}
+		int  getScore() const {return this->score;}
 
 		void printBoard(WINDOW* win) const {
 			wmove(win,0,0);
