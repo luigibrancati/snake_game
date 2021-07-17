@@ -134,13 +134,20 @@ string getWindowInput(sf::RenderWindow& window, sf::Text& text){
 			if(unicode==13){
 				return u_input;
 			}
-			if(unicode<=57 && unicode>=48){
+			else if(unicode<=57 && unicode>=48){
 				u_input+=(char)unicode;
 				text.setString(text.getString()+u_input.back());
-				wreset(window);
-				window.draw(text);
-				window.display();
 			}
+			else if(unicode==8){
+				u_input.pop_back();
+				string temp = text.getString();
+				temp.pop_back();
+				text.setString(temp);
+				
+			}
+			wreset(window);
+			window.draw(text);
+			window.display();
 		}
 	}
 	return u_input;
