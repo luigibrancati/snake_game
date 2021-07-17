@@ -3,8 +3,6 @@
 
 #include <iostream>
 #include <vector>
-#include <algorithm>
-#include "food.hpp"
 
 short abs(short a){
 	return (a>0? a:-a);
@@ -39,6 +37,10 @@ class Snake {
 
 	std::vector<short> getX() const {return this->x;}
 	std::vector<short> getY() const {return this->y;}
+	short getHX() const {return this->x[0];}
+	short getHY() const {return this->y[0];}
+	short getTX() const {return this->x[this->x.size()-1];}
+	short getTY() const {return this->y[this->y.size()-1];}
 	char getS(short s) const {return this->symbols[s];}
 	short len() const {return this->x.size();}
 

@@ -1,106 +1,147 @@
 #include <iostream>
-#include <ctime>
 #include <cstdlib>
-#include <ncurses.h>
+#include <ctime>
 #include <string>
+#include <sstream>
 #include <unistd.h>
+#include <SFML/Graphics.hpp>
 #include "game.hpp"
-using std::cout; using std::cin; using std::endl;
+using std::cout; using std::cin; using std::endl; using std::string;
 
 const int base_speed = 50000;
-int x0_val = 0, y0_val = 0;
 
-void fine(WINDOW*, int, int);
-void runGame(WINDOW*);
+void fine(sf::RenderWindow&, sf::Text&, int);
+void runGame(sf::RenderWindow&, sf::Text&);
 int set_speed_input(int);
-void wreset(WINDOW*);
+void wreset(sf::RenderWindow&);
+string getWindowInput(sf::RenderWindow&, sf::Text&); 
 
 int main(){
 	std::srand(std::time(NULL));
-	
-	// ncurses configuration
-	(void) initscr();      /* inizializza la libreria curses */ 
-	keypad(stdscr, TRUE);  /* abilita la mappatura della tastiera */ 
-	(void) nonl();         /* non convertire NL->CR/NL in output */ 
-	(void) cbreak();       /* prende i caratteri in input uno alla volta, senza attendere il \n */ 
-	
-	
-	//take the maximum size of main window, used later in runGame
-	getmaxyx(stdscr, y0_val,x0_val);
-	cout<<y0_val<<x0_val<<endl;
-	//run game
-	WINDOW * win = newwin(2, 50, 0, 0);
-	keypad(win, TRUE);  /* abilita la mappatura della tastiera */ 
-	runGame(win);
+	sf::Font font;
+	if (!font.loadFromFile("../Arialn.ttf"))
+	{
+		std::cout<<"Fuck you!"<<std::endl;
+		return 0;
+	}
+	sf::Text text;
+	text.setFont(font);
+	text.setCharacterSize(20);
+	text.setFillColor(sf::Color::White);
+	sf::RenderWindow window(sf::VideoMode(1200,1000),"Snake!");
+	runGame(window, text);
 	return 0;
 }
 
-void runGame(WINDOW * win){
-	int board_d, w_height, w_width, speed_val=1;
-	char str[5], speed[5];
+void runGame(sf::RenderWindow& window, sf::Text& text){
+	int board_d, speed;
+	std::string input;
+	
+	wreset(window);
+	text.setString("WELCOME TO SHITTY SNAKE!\nChoose the dimension of the board:");
+	window.draw(text);
+	window.display();
+	input = getWindowInput(window, text);
+	if(!input.empty()){
+		board_d = std::stoi(input);
+		board_d = board_d%80;
+	}
+	else{
+		board_d = 20;
+	}
 
-	wreset(win);
-	mvwin(win, 0, 0);
-	wresize(win, 2, 50);
-	(void) echo(); //add input echo	
-	waddstr(win, "WELCOME TO SHITTY SNAKE!\n");
-	waddstr(win, "Choose the dimension of the board: ");
-	wgetstr(win, str);
-	board_d = std::atoi(str);
-	board_d = (board_d<15? 15:board_d);
-	wreset(win);
-	waddstr(win, "Choose the speed (1=fastest, 2=slower, etc.): ");
-	wgetstr(win, speed);
-	speed_val = std::atoi(speed);
-	wreset(win);
-
-	w_height = board_d+3; //3 rows more to print Score and losing message
-	w_width = 2*board_d; //twice because I print ". " as a board cell
-	mvwin(win,(y0_val-w_height)/2,(x0_val-w_width)/2);
-	wresize(win, w_height, w_width);
-	wreset(win);
+	wreset(window);
+	text.setString("Choose the speed (1=fastest, 2=slower, etc.): ");
+	window.draw(text);
+	window.display();
+	input = getWindowInput(window, text);
+	if(!input.empty()){
+		speed = std::stoi(input);
+		speed = speed%5;
+	}
+	else{
+		speed = 2;
+	}
 
 	SnakeGame game(board_d);
-	
-	//first print	
-	(void) noecho();       /* nessuna echo dell'input */ 	
-	game.printBoard(win);
-	wrefresh(win);
-	game.move(win);
-	nodelay(win, true);//don't wait for input after this
-
-	while(game.getRun()){
-		game.move(win);
-		game.printBoard(win);
-		wrefresh(win);
-		usleep(set_speed_input(speed_val));
+	sf::Event dir;
+	cout<<board_d<<speed<<endl;
+	while(window.isOpen() && game.getRun()){ 	
+		wreset(window);
+		text.setString("");
+		while(window.pollEvent(dir)){
+			if(dir.type == sf::Event::Closed) window.close();
+			else{
+				game.move(dir);
+				text.setString(game.getBoard());
+				window.draw(text);
+				window.display();
+				usleep(speed*base_speed);
+			}
+		}
 	}
-	
 	usleep(base_speed);
-	fine(win, 0, game.getScore());
+	fine(window,text,5);
+}
+
+void fine(sf::RenderWindow& window, sf::Text& text, int score){
+	if(window.isOpen()){
+		wreset(window);
+		string output = "You lost! Final Score: "+std::to_string(score)+"\n";
+		output=output+"[R] Retry [Q] Quit";
+		text.setString(output);
+		wreset(window);
+		window.draw(text);
+		window.display();
+	
+		sf::Event event;
+		while(window.waitEvent(event)){
+			if(event.type == sf::Event::Closed){
+				window.close();
+			}
+			else if (event.type == sf::Event::KeyPressed){
+				switch(event.key.code){
+					case sf::Keyboard::R:
+						runGame(window, text);
+						break;
+					case sf::Keyboard::Q:
+						window.close();
+						return;
+				}
+			}
+		}
+	}
 }
 
 int set_speed_input(int speed_val){
-	return (speed_val==KEY_ENTER?base_speed:speed_val*base_speed);
+	return (speed_val==-1?base_speed:speed_val*base_speed);
 }
 
-void fine(WINDOW * win, int sig, int score){
-	char out;
-	std::string output = "You lost! Final Score: "+std::to_string(score)+"\n";
-
-	nodelay(win, false); //wait input
-	wreset(win);
-	waddstr(win, output.c_str());
-	waddstr(win, "[R] Retry [Q] Quit");
-	wrefresh(win);
-	out = wgetch(win);
-	if(out == 'R' || out == 'r') runGame(win);
-	else if (out == 'Q' || out=='q') endwin();
-	else fine(win, sig, score);
+void wreset(sf::RenderWindow& window){
+	window.clear(sf::Color::Black);
 }
 
-void wreset(WINDOW * win){
-	wclear(win);
-	wmove(win, 0, 0);
-	wrefresh(win);
+string getWindowInput(sf::RenderWindow& window, sf::Text& text){
+	string u_input="";
+	sf::Event event;
+	while(window.waitEvent(event)){
+		if(event.type == sf::Event::Closed){
+			window.close();
+			return u_input;
+		}
+		else if (event.type == sf::Event::TextEntered){
+			unsigned short unicode = event.text.unicode;
+			if(unicode==13){
+				return u_input;
+			}
+			if(unicode<=57 && unicode>=48){
+				u_input+=(char)unicode;
+				text.setString(text.getString()+u_input.back());
+				wreset(window);
+				window.draw(text);
+				window.display();
+			}
+		}
+	}
+	return u_input;
 }
